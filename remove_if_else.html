@@ -17,41 +17,199 @@
       <button id="close">Close</button>
     </div>
     <script type="text/javascript">
-      class powerOnState {
-        open() {}
-        close() {}
-        powerOn() {}
-        powerOff() {}
+      // 切换状态是非线性的 在每个状态中维护当前信息
+
+      // 当前状态
+      class Context {
+        constructor(elState, elInfo) {
+          this.currentState = new PowerOffState(this)
+          this.elstate = elState
+          this.elinfo  = elInfo
+        }
+
+        changeStateTo(state) {
+          this.currentState = state
+          this.elstate.innerText = state.getName()
+        }
+
+        info(msg) {
+          this.elinfo.innerText = msg
+        }
+
+        open() {
+          this.info('')
+          this.currentState.open()
+        }
+
+        close() {
+          this.info('')
+          this.currentState.close()
+        }
+
+        powerOn() {
+          this.info('')
+          this.currentState.powerOn()
+        }
+
+        powerOff() {
+          this.info('')
+          this.currentState.powerOff()
+        }
+
+        cooking() {
+          this.info('')
+          this.currentState.cooking()
+        }
       }
-      class PowerOffState {
-        open() {}
-        close() {}
-        powerOn() {}
-        powerOff() {}
+
+      class State {
+        constructor(stateName) {
+          this.getName = () => {
+            return stateName
+          }
+        }
       }
-      class OpenState {
-        open() {}
-        close() {}
-        powerOn() {}
-        powerOff() {}
+
+      class PowerOnState extends State {
+        constructor(ctx) {
+          super("已接电")
+          this.ctx = ctx
+        }
+        open() {
+          this.ctx.changeStateTo(new OpenState(this.ctx))
+        }
+        close() {
+          this.ctx.info('未打开不能关闭')
+        }
+        cooking() {
+          this.ctx.changeStateTo(new CookingState(this.ctx))
+        }
+        powerOn() {
+          this.ctx.info('当前已接电')
+        }
+        powerOff() {
+          this.ctx.changeStateTo(new PowerOffState(this.ctx))
+        }
       }
-      class CloseState {
-        open() {}
-        close() {}
-        powerOn() {}
-        powerOff() {}
+
+      class PowerOffState extends State {
+        constructor(ctx) {
+          console.log('ctx', ctx)
+          super("已断电")
+          this.ctx = ctx
+        }
+        open() {
+          this.ctx.changeStateTo(new OpenState(this.ctx))
+        }
+        close() {
+          this.ctx.info('未打开不能关闭')
+        }
+        cooking() {
+          this.ctx.info('断电状态不能工作')
+        }
+        powerOn() {
+          this.ctx.changeStateTo(new PowerOnState(this.ctx))
+        }
+        powerOff() {
+          this.ctx.info('当前处于断电状态')
+        }
       }
-      class CookingState {
-        open() {}
-        close() {}
-        powerOn() {}
-        powerOff() {}
+
+      class OpenState extends State {
+        constructor(ctx) {
+          super("开启状态")
+          this.ctx = ctx
+        }
+        open() {
+          this.ctx.info('当前处于打开状态')
+        }
+        close() {
+          this.ctx.changeStateTo(new CloseState(this.ctx))
+        }
+        cooking() {
+          this.ctx.info('未关闭不能工作')
+        }
+        powerOn() {
+          this.ctx.info('已接电')
+        }
+        powerOff() {
+          this.ctx.changeStateTo(new PowerOffState(this.ctx))
+        }
       }
-      let powerOn = document.querySelector('#powerOn')
-      let powerOff = document.querySelector('#powerOff')
-      let cooking = document.querySelector('#cooking')
-      let open = document.querySelector('#open')
-      let close = document.querySelector('#close')
+
+      class CloseState extends State {
+        constructor(ctx) {
+          super("关闭状态")
+          this.ctx = ctx
+        }
+        open() {
+          this.ctx.changeStateTo(new OpenState(this.ctx))
+        }
+        close() {
+          this.ctx.info('当前处于关闭状态')
+        }
+        cooking() {
+          this.ctx.changeStateTo(new CookingState(this.ctx))
+        }
+        powerOn() {
+          this.ctx.info('已接电')
+        }
+        powerOff() {
+          this.ctx.changeStateTo(new PowerOffState(this.ctx))
+        }
+      }
+
+      class CookingState extends State {
+        constructor(ctx) {
+          super("工作中")
+          this.ctx = ctx
+        }
+        open() {
+          this.ctx.info('工作中不能打开')
+        }
+        close() {
+          this.ctx.info('当前处于关闭状态')
+        }
+        cooking() {
+          this.ctx.info('当前处于工作状态')
+        }
+        powerOn() {
+          this.ctx.info('已接电')
+        }
+        powerOff() {
+          this.ctx.changeStateTo(new PowerOffState(this.ctx))
+        }
+      }
+
+      let powerOn  = document.querySelector('#power_on')
+      let powerOff = document.querySelector('#power_off')
+      let cooking  = document.querySelector('#cooking')
+      let open     = document.querySelector('#open')
+      let close    = document.querySelector('#close')
+      let h3       = document.querySelector('h3')
+      let tips     = document.querySelector('.tips')
+
+      let ctx  = new Context(h3, tips)
+
+      powerOn.addEventListener('click', () => {
+        ctx.powerOn()
+      })
+
+      powerOff.addEventListener('click', () => {
+        ctx.powerOff()
+      })
+
+      cooking.addEventListener('click', () => {
+        ctx.cooking()
+      })
+
+      open.addEventListener('click', () => {
+        ctx.open()
+      })
+
+      close.addEventListener('click', () => {
+        ctx.close()
+      })
     </script>
   </body>
 </html>
